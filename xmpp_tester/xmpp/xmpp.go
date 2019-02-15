@@ -662,7 +662,7 @@ func (c *Client) Send(chat Chat) (n int, err error) {
 	}
 
 	stanza := "<message to='%s' type='%s' id='%s' xml:lang='en'>" + subtext + "<body>%s</body>" + thdtext + "</message>"
-
+	
 	return fmt.Fprintf(c.conn, stanza,
 		xmlEscape(chat.Remote), xmlEscape(chat.Type), cnonce(), xmlEscape(chat.Text))
 }

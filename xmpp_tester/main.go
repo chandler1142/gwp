@@ -4,8 +4,10 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
+	"github.com/satori/go.uuid"
 	"github.com/sausheong/gwp/xmpp_tester/entity"
 	"github.com/sausheong/gwp/xmpp_tester/xmpp"
+	"math/rand"
 	"os"
 	"strings"
 	"sync"
@@ -33,6 +35,7 @@ func init() {
 		os.Exit(2)
 	}
 	flag.Parse()
+
 	if *username == "" || *password == "" {
 		if *debug && *username == "" && *password == "" {
 			fmt.Fprintf(os.Stderr, "no username or password were given; attempting ANONYMOUS auth\n")
@@ -70,7 +73,6 @@ var wg sync.WaitGroup
 
 func main() {
 	wg.Add(1)
-
 	userA := entity.NewUserClient(&xmpp.Options{
 		Host:          *server,
 		User:          *username,
@@ -80,10 +82,7 @@ func main() {
 		Session:       *session,
 		Status:        *status,
 		StatusMessage: *statusMessage,
-	})
-	userA.Start()
-	userA.SendMessage("test@laptop-d5d42j5u", *statusMessage)
-	userA.GetRoster()
+	}, append([]string{}, "test2@laptop-d5d42j5u"))
 
 	userB := entity.NewUserClient(&xmpp.Options{
 		Host:          *server,
@@ -94,11 +93,59 @@ func main() {
 		Session:       *session,
 		Status:        *status,
 		StatusMessage: *statusMessage,
-	})
+	}, append([]string{}, "admin@laptop-d5d42j5u"))
+
+	userC := entity.NewUserClient(&xmpp.Options{
+		Host:          *server,
+		User:          "test3@laptop-d5d42j5u",
+		Password:      "123123",
+		NoTLS:         *notls,
+		Debug:         *debug,
+		Session:       *session,
+		Status:        *status,
+		StatusMessage: *statusMessage,
+	}, append([]string{}, "admin@laptop-d5d42j5u"))
+
+	userD := entity.NewUserClient(&xmpp.Options{
+		Host:          *server,
+		User:          "test@laptop-d5d42j5u",
+		Password:      "123",
+		NoTLS:         *notls,
+		Debug:         *debug,
+		Session:       *session,
+		Status:        *status,
+		StatusMessage: *statusMessage,
+	}, append([]string{}, "admin@laptop-d5d42j5u"))
+
+
+	msgCount := 100
+	users := []entity.User{*userA, *userB, *userC, *userD}
+
+	var sendWg sync.WaitGroup
+	sendWg.Add(msgCount * 4)
+
+	userA.Start()
 	userB.Start()
-	userB.SendMessage("admin@laptop-d5d42j5u", *statusMessage)
-	userB.GetRoster()
+	userC.Start()
+	userD.Start()
+
+	for i := 0; i < msgCount; i++ {
+		for j := 0; j < len(users); j++ {
+			u := users[j]
+			size := len(u.Friends)
+			uuid, err := uuid.NewV4()
+			if err != nil {
+				fmt.Println("generate random message text fail")
+				continue
+			}
+			r := rand.Intn(size)
+			go func() {
+				u.SendMessage(u.Friends[r], uuid.String())
+				sendWg.Done()
+			}()
+		}
+	}
+	sendWg.Wait()
 
 	wg.Wait()
-
 }
