@@ -4,10 +4,9 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
-	"github.com/satori/go.uuid"
 	"github.com/sausheong/gwp/xmpp_tester/entity"
+	"github.com/sausheong/gwp/xmpp_tester/metrics"
 	"github.com/sausheong/gwp/xmpp_tester/xmpp"
-	"math/rand"
 	"os"
 	"strings"
 	"sync"
@@ -82,7 +81,7 @@ func main() {
 		Session:       *session,
 		Status:        *status,
 		StatusMessage: *statusMessage,
-	}, append([]string{}, "test2@laptop-d5d42j5u"))
+	}, append([]string{}, "test6@laptop-d5d42j5u"))
 
 	userB := entity.NewUserClient(&xmpp.Options{
 		Host:          *server,
@@ -93,7 +92,7 @@ func main() {
 		Session:       *session,
 		Status:        *status,
 		StatusMessage: *statusMessage,
-	}, append([]string{}, "admin@laptop-d5d42j5u"))
+	}, append([]string{}, "test6@laptop-d5d42j5u"))
 
 	userC := entity.NewUserClient(&xmpp.Options{
 		Host:          *server,
@@ -104,7 +103,7 @@ func main() {
 		Session:       *session,
 		Status:        *status,
 		StatusMessage: *statusMessage,
-	}, append([]string{}, "admin@laptop-d5d42j5u"))
+	}, append([]string{}, "test6@laptop-d5d42j5u"))
 
 	userD := entity.NewUserClient(&xmpp.Options{
 		Host:          *server,
@@ -115,11 +114,20 @@ func main() {
 		Session:       *session,
 		Status:        *status,
 		StatusMessage: *statusMessage,
+	}, append([]string{}, "test6@laptop-d5d42j5u"))
+
+	userE := entity.NewUserClient(&xmpp.Options{
+		Host:          *server,
+		User:          "test6@laptop-d5d42j5u",
+		Password:      "123",
+		NoTLS:         *notls,
+		Debug:         *debug,
+		Session:       *session,
+		Status:        *status,
+		StatusMessage: *statusMessage,
 	}, append([]string{}, "admin@laptop-d5d42j5u"))
 
-
-	msgCount := 100
-	users := []entity.User{*userA, *userB, *userC, *userD}
+	msgCount := 1
 
 	var sendWg sync.WaitGroup
 	sendWg.Add(msgCount * 4)
@@ -128,23 +136,27 @@ func main() {
 	userB.Start()
 	userC.Start()
 	userD.Start()
+	userE.Start()
 
-	for i := 0; i < msgCount; i++ {
-		for j := 0; j < len(users); j++ {
-			u := users[j]
-			size := len(u.Friends)
-			uuid, err := uuid.NewV4()
-			if err != nil {
-				fmt.Println("generate random message text fail")
-				continue
-			}
-			r := rand.Intn(size)
-			go func() {
-				u.SendMessage(u.Friends[r], uuid.String())
-				sendWg.Done()
-			}()
-		}
-	}
+	metrics.PrintLog()
+	//
+	//users := []entity.User{*userA, *userB, *userC, *userD, }
+	//for i := 0; i < msgCount; i++ {
+	//	for j := 0; j < len(users); j++ {
+	//		u := users[j]
+	//		size := len(u.Friends)
+	//		uuid, err := uuid.NewV4()
+	//		if err != nil {
+	//			fmt.Println("generate random message text fail")
+	//			continue
+	//		}
+	//		r := rand.Intn(size)
+	//		go func() {
+	//			u.SendMessage(u.Friends[r], uuid.String())
+	//			sendWg.Done()
+	//		}()
+	//	}
+	//}
 	sendWg.Wait()
 
 	wg.Wait()

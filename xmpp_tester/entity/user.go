@@ -3,6 +3,7 @@ package entity
 import (
 	"fmt"
 	"github.com/satori/go.uuid"
+	"github.com/sausheong/gwp/xmpp_tester/metrics"
 	"github.com/sausheong/gwp/xmpp_tester/xmpp"
 	"log"
 	"math/rand"
@@ -37,6 +38,7 @@ func (user *User) Start() {
 			}
 			switch v := chat.(type) {
 			case xmpp.Chat:
+				metrics.RecordReceivedMessageCount()
 				fmt.Printf("%s received message from %s: %s\n", user.Name, v.Remote, v.Text)
 			case xmpp.Presence:
 				fmt.Println(v.From+": ", v.Show)
@@ -47,10 +49,9 @@ func (user *User) Start() {
 
 //发送消息
 func (user *User) SendMessage(targetJID, message string) {
-	//go func() {
-		chat := xmpp.Chat{Remote: targetJID, Type: "chat", Text: message}
-		user.Client.Send(chat)
-	//}()
+	metrics.RecordSendMessageCount()
+	chat := xmpp.Chat{Remote: targetJID, Type: "chat", Text: message}
+	user.Client.Send(chat)
 }
 
 //发送消息给随机好友
