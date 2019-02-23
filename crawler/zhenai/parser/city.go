@@ -5,17 +5,17 @@ import (
 	"regexp"
 )
 
-const cityListRe = `<a href="(http://www.zhenai.com/zhenghun/[a-z0-9]+)"[^>]*>([^<]+)</a>`
+const cityRe = `<a href="(http://album.zhenai.com/u/[0-9]+)"[^>]*>([^<]+)</a>`
 
-func ParseCityList(contents []byte) engine.ParseResult {
-	reg := regexp.MustCompile(cityListRe)
+func ParseCity(contents []byte) engine.ParseResult {
+	reg := regexp.MustCompile(cityRe)
 	matches := reg.FindAllSubmatch(contents, -1)
 	result := engine.ParseResult{}
 	for _, m := range matches {
-		result.Items = append(result.Items, "City " + string(m[2]))
+		result.Items = append(result.Items, "User " + string(m[2]))
 		result.Requests = append(result.Requests, engine.Request{
 			Url:        string(m[1]),
-			ParserFunc: ParseCity,
+			ParserFunc: engine.NilParser,
 		})
 	}
 	return result
