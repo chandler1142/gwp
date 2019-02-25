@@ -7,6 +7,9 @@ import (
 
 const cityRe = `<a href="(http://album.zhenai.com/u/[0-9]+)"[^>]*>([^<]+)</a>`
 
+/**
+解析城市页面，获取用户的名称和URL
+ */
 func ParseCity(contents []byte) engine.ParseResult {
 	reg := regexp.MustCompile(cityRe)
 	matches := reg.FindAllSubmatch(contents, -1)
@@ -15,7 +18,7 @@ func ParseCity(contents []byte) engine.ParseResult {
 		result.Items = append(result.Items, "User " + string(m[2]))
 		result.Requests = append(result.Requests, engine.Request{
 			Url:        string(m[1]),
-			ParserFunc: engine.NilParser,
+			ParserFunc: ParseProfile,
 		})
 	}
 	return result

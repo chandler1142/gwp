@@ -2,7 +2,6 @@ package fetcher
 
 import (
 	"bufio"
-	"fmt"
 	"golang.org/x/net/html/charset"
 	"golang.org/x/text/encoding"
 	"golang.org/x/text/encoding/unicode"
@@ -13,15 +12,19 @@ import (
 )
 
 func Fetch(url string) ([]byte, error) {
-	resp, err := http.Get(url)
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return nil, err
+		log.Fatalln(err)
+	}
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatalln(err)
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return nil,
-			fmt.Errorf("wrong status code: %d", resp.StatusCode)
-	}
+
 	reader := bufio.NewReader(resp.Body)
 	e := determineEncoding(reader)
 	utf8Reader := transform.NewReader(reader, e.NewDecoder())
